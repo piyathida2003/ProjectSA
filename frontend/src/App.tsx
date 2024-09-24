@@ -8,7 +8,6 @@ import Login from './pages/Member/Login';
 import Register from './pages/Member/Register';
 import RefundRequest from './pages/refund/RefundRequest';
 import { UserProvider } from './pages/component/UserContext'; // นำเข้า UserProvider
-import { PrivateRoute } from './pages/component/PrivateRoute'; // ใช้ named import แทน default import
 
 const App: React.FC = () => {
   return (
@@ -22,7 +21,7 @@ const App: React.FC = () => {
           <Route path="/register" element={<Register />} />
 
           {/* Private Route ต้องล็อกอินก่อนถึงจะเข้าได้ */}
-          <Route element={<PrivateRoute />}>
+          <Route>
             <Route path="/concerts" element={<ConcertSelection />} />
             <Route path="/select-seats" element={<SeatSelection />} />
             <Route path="/payment" element={<Payment />} />

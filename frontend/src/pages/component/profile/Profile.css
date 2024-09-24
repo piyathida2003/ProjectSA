@@ -10,6 +10,15 @@
     right: 10px;
   }
   
+  .profile-image {
+    width: 50px; /* ขนาดของรูปภาพ */
+    height: 50px; /* ขนาดของรูปภาพ */
+    border-radius: 50%; /* ทำให้กรอบเป็นวงกลม */
+    object-fit: cover; /* ปรับรูปภาพให้พอดีกับกรอบ */
+    border: 2px solid #fff; /* ใส่กรอบสีขาวรอบรูปภาพ */
+    margin-right: 10px; /* เว้นระยะห่างระหว่างรูปภาพกับข้อความ */
+  }
+  
   .profile-info {
     display: flex;
     flex-direction: column;

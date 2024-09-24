@@ -1,0 +1,19 @@
+.profile-container {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50px; /* ให้กรอบโค้ง */
+  }
+  
+  .profile-avatar {
+    margin-right: 10px;
+  }
+  
+  .profile-username {
+    color: #fff;
+  }
+  

@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import moment from 'moment'; // ใช้ moment.js ในการแปลงวันที่
 import { ConcertInterface } from '../../interfaces/IConcert';
 import { GetConcert } from '../../services/https'; // นำเข้าฟังก์ชัน GetConcert
+import Profile from '../component/profile/Profile'; // นำเข้าคอมโพเนนต์โปรไฟล์
+import { useUser } from '../component/UserContext'; // ดึงข้อมูลจาก UserContext
 
 const { Title, Text } = Typography;
 
@@ -12,6 +14,8 @@ const ConcertSelection: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const loggedInUser = useUser(); // ดึงข้อมูลผู้ใช้จาก Context
 
   // ดึงข้อมูลคอนเสิร์ตจาก Backend
   useEffect(() => {
@@ -46,6 +50,8 @@ const ConcertSelection: React.FC = () => {
 
   return (
     <div style={{ margin: '20px', padding: '20px', background: '#f0f2f5', minHeight: '100vh' }}>
+      {/* เรียกใช้โปรไฟล์ผู้ใช้ */}
+      <Profile username={loggedInUser.username} email={loggedInUser.email} imageUrl={loggedInUser.imageUrl} />
       <Title level={2} style={{ textAlign: 'center', marginBottom: '40px', color: '#1890ff' }}>
         เลือกคอนเสิร์ตที่คุณสนใจ
       </Title>

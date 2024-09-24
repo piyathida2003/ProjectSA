@@ -2,6 +2,9 @@ import React, { useContext, useState } from 'react';
 
 // สร้าง interface เพื่อกำหนดรูปแบบของข้อมูลที่ Context จัดเก็บ
 interface UserContextInterface {
+  imageUrl: string | undefined;
+  email: string;
+  username: string;
   token: string | null;
   memberID: string | null;
   setToken: (token: string | null) => void;
