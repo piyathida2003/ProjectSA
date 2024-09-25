@@ -1,10 +1,10 @@
+/* eslint-disable prefer-const */
 import axios from 'axios';
 import { MemberInterface } from "../../interfaces/IMember";
 import { PaymentInterface } from "../../interfaces/IPayment";
 import { SmsInterface } from "../../interfaces/ISms";
 import { TicketInterface } from "../../interfaces/ITicket";
 
-// Base URL for the API
 const apiUrl = "http://localhost:8000";
 
 // ฟังก์ชันสำหรับดึงค่า token และ token_type จาก localStorage
@@ -19,7 +19,7 @@ const getAuthHeaders = () => {
 
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`, // ใช้ backticks และ template literal
+    Authorization: `${tokenType} ${token}`, // ใช้ backticks และ template literal ที่ถูกต้อง
   };
 };
 
@@ -54,9 +54,8 @@ async function GetMember() {
 // ฟังก์ชันสำหรับสร้างสมาชิกใหม่ (ลงทะเบียน)
 async function CreateMember(data: MemberInterface) {
   try {
-    const res = await axios.post(`${apiUrl}/Member`, data, {
-      headers: getAuthHeaders(),
-    });
+    // ไม่จำเป็นต้องมี headers authorization สำหรับการลงทะเบียน
+    const res = await axios.post(`${apiUrl}/Member`, data); 
 
     if (res.status === 201) {
       console.log("Registration successful:", res.data);
@@ -71,57 +70,73 @@ async function CreateMember(data: MemberInterface) {
   }
 }
 
-async function CreatePayment(data: { payment: PaymentInterface; tickets: TicketInterface[] }) {
-  const formData = new FormData();
 
-  // ตรวจสอบว่าค่าที่ส่งมามีการกำหนดหรือไม่ก่อนใช้ FormData
-  if (data.payment.PaymentMethod) {
-    formData.append("PaymentMethod", data.payment.PaymentMethod);
+// ฟังก์ชันสำหรับสร้างการชำระเงิน
+async function CreatePayment(data: { payment: PaymentInterface; tickets: TicketInterface[] }) { 
+  if (!data.payment.PaymentMethod || !data.payment.Amount) {
+    console.error('Error: Missing PaymentMethod or Amount.');
+    return false;
   }
 
-  if (data.payment.PaymentDate) {
-    formData.append("PaymentDate", data.payment.PaymentDate);
-  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let requestBody: any;
 
-  formData.append("Amount", String(data.payment.Amount ?? 0));
-
-  // ตรวจสอบ SlipImage ก่อนแนบไฟล์ ถ้าไม่มีจะไม่ส่งค่าใดๆ
   if (data.payment.SlipImage) {
-    formData.append("SlipImage", data.payment.SlipImage);
-  }
+    if (!data.payment.SlipImage.startsWith('data:image/')) {
+      console.error('Error: SlipImage format is not valid.');
+      return false;
+    }
 
-  // เพิ่มข้อมูลรายการ ticket ในรูปแบบ JSON (เพราะ FormData ไม่รองรับ array โดยตรง)
-  formData.append("Tickets", JSON.stringify(data.tickets));
+    try {
+      const blob = await fetch(data.payment.SlipImage).then(res => res.blob());
+      const base64String = await convertBlobToBase64(blob);
+
+      requestBody = JSON.stringify({
+        payment: { ...data.payment, SlipImage: base64String },
+        tickets: data.tickets
+      });
+    } catch (error) {
+      console.error('Error converting slip to Base64:', error);
+      return false;
+    }
+  } else {
+    requestBody = JSON.stringify({
+      payment: data.payment,
+      tickets: data.tickets
+    });
+  }
 
   const requestOptions = {
     method: "POST",
+    body: requestBody,
     headers: {
-      ...getAuthHeaders(), // เพิ่ม headers การตรวจสอบตัวตน
+      Authorization: `Bearer ${localStorage.getItem("token")}`, // ใช้ backticks
+      "Content-Type": "application/json"
     },
-    body: formData, // ใช้ FormData แทน JSON
   };
 
   try {
     const response = await fetch(`${apiUrl}/payment`, requestOptions);
-
-    // ตรวจสอบการตอบกลับจากเซิร์ฟเวอร์
     if (!response.ok) {
       throw new Error(`Error: ${response.status} ${response.statusText}`);
     }
-
-    const result = await response.json(); // แปลงการตอบกลับเป็น JSON
+    const result = await response.json();
     return result;
   } catch (error) {
-    console.error("CreatePayment Error:", error);
-
-    // ตรวจสอบว่าข้อผิดพลาดเกิดจากการเชื่อมต่อเครือข่ายหรือไม่
-    if (error instanceof TypeError && error.message.includes('NetworkError')) {
-      console.error('Network error occurred');
-    }
-
-    return false; // ส่งกลับ false เมื่อเกิดข้อผิดพลาด
+    console.error('CreatePayment Error:', error);
+    return false;
   }
 }
+
+// ฟังก์ชันสำหรับแปลง Blob เป็น Base64
+const convertBlobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
 
 // ฟังก์ชันสำหรับสร้างข้อความ SMS
 async function CreateSms(data: SmsInterface) {
@@ -145,7 +160,7 @@ async function CreateTicket(ticketData: TicketInterface) {
     body: JSON.stringify(ticketData),
   };
 
-  const res = await fetch(`${apiUrl}/ticket`, requestOptions);
+  let res = await fetch(`${apiUrl}/ticket`, requestOptions);
   
   if (!res.ok) {
     const errorDetails = await res.json();
@@ -157,17 +172,60 @@ async function CreateTicket(ticketData: TicketInterface) {
 }
 
 // ฟังก์ชันสำหรับดึงข้อมูลบัตรคอนเสิร์ต
-async function GetTicket() {
-  try {
-    const res = await axios.get(`${apiUrl}/Ticket`, {
-      headers: getAuthHeaders(),
+async function GetTicket( memberID: number ){
+  const requestOptions = {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
+  let res = await fetch(`${apiUrl}/tickets/member/${memberID}`, requestOptions)
+    .then((res) => {
+      if (res.status === 200) {
+        return res.json();
+      } else {
+        return false;
+      }
     });
-    return res.data;
-  } catch (error: unknown) {
-    console.error("Error fetching ticket data:", (error as Error).message);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (error as any)?.response;
-  }
+
+  return res;
+};
+
+// ฟังก์ชันสำหรับส่งอีเมลบัตรคอนเสิร์ต
+async function SendTicketEmail(data: {   
+  memberID: number, 
+  email: string, 
+  concertName: string, 
+  qrCode: string, 
+  seats: string[], 
+  amount: number 
+}): Promise<boolean> {
+  const requestOptions = {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  };
+
+  const res = await fetch(`${apiUrl}/sendTicketEmail`, requestOptions)
+    .then((response) => {
+      if (response.status === 200) {
+        console.log("Email sent successfully");
+        return true;
+      } else {
+        console.error("Error during email sending:", response.statusText);
+        return false;
+      }
+    })
+    .catch((error) => {
+      console.error("Error sending email:", error);
+      return false;
+    });
+
+  return res;
 }
 
 // ฟังก์ชันสำหรับดึงข้อมูลประเภทที่นั่งคอนเสิร์ต
@@ -179,7 +237,7 @@ async function GetSeatType() {
     },
   };
 
-  const res = await fetch(`${apiUrl}/seatTypes`, requestOptions)
+  let res = await fetch(`${apiUrl}/seatTypes`, requestOptions)
     .then((res) => {
       if (res.status === 200) {
         return res.json();
@@ -200,7 +258,7 @@ async function GetConcert() {
     },
   };
 
-  const res = await fetch(`${apiUrl}/concerts`, requestOptions)
+  let res = await fetch(`${apiUrl}/concerts`, requestOptions)
     .then((res) => {
       if (res.status === 200) {
         return res.json();
@@ -212,13 +270,13 @@ async function GetConcert() {
   return res;
 }
 
-// ฟังก์ชันสำหรับดึงข้อมูลที่นั่งจากแต่ล่ะคอนเสิร์ต
-async function GetSeatsByConcertId(id: number | undefined) {
+// ฟังก์ชันสำหรับดึงข้อมูลที่นั่งจากแต่ละคอนเสิร์ต
+async function GetSeatsByConsertId(id: number | undefined) {
   const requestOptions = {
     method: "GET"
   };
 
-  const res = await fetch(`${apiUrl}/seats/${id}`, requestOptions)
+  let res = await fetch(`${apiUrl}/seats/${id}`, requestOptions)
     .then((res) => {
       if (res.status === 200) {
         return res.json();
@@ -230,84 +288,22 @@ async function GetSeatsByConcertId(id: number | undefined) {
   return res;
 }
 
-// ฟังก์ชันสำหรับสร้างคำขอคืนเงิน
-async function CreateRefund(data: { refund_amount: number; }) {
-  return await axios
-    .post(`${apiUrl}/refund`, data, { headers: getAuthHeaders() })
-    .then((res) => res)
-    .catch((e) => e.response);
-}
+// ฟังก์ชันสำหรับดึงข้อมูลการชำระเงินจากสมาชิก
+async function GetPaymentByMemberId(id: number | undefined) {
+  const requestOptions = {
+    method: "GET"
+  };
 
-// ฟังก์ชันสำหรับดึงคำขอคืนเงินทั้งหมด
-async function GetRefundRequests() {
-  return await axios
-    .get(`${apiUrl}/refund-requests`, { headers: getAuthHeaders() })
-    .then((res) => res)
-    .catch((e) => e.response);
-}
+  let res = await fetch(`${apiUrl}/payment/${id}`, requestOptions)
+    .then((res) => {
+      if (res.status === 200) {
+        return res.json();
+      } else {
+        return false;
+      }
+    });
 
-// ฟังก์ชันสำหรับดึงคำขอคืนเงินเฉพาะตาม ID
-async function GetRefundRequestById(id: string) {
-  return await axios
-    .get(`${apiUrl}/refund-request/${id}`, { headers: getAuthHeaders() })
-    .then((res) => res)
-    .catch((e) => e.response);
-}
-
-// ฟังก์ชันสำหรับอัปเดตคำขอคืนเงินตาม ID
-async function UpdateRefundRequestById(id: string, data: { refund_amount?: number; }) {
-  return await axios
-    .put(`${apiUrl}/refund-request/${id}`, data, { headers: getAuthHeaders() })
-    .then((res) => res)
-    .catch((e) => e.response);
-}
-
-// ฟังก์ชันสำหรับลบคำขอคืนเงินตาม ID
-async function DeleteRefundRequestById(id: string) {
-  return await axios
-    .delete(`${apiUrl}/refund-request/${id}`, { headers: getAuthHeaders() })
-    .then((res) => res)
-    .catch((e) => e.response);
-}
-
-// ฟังก์ชันสำหรับอนุมัติการคืนเงิน
-async function ApproveRefund(data: { refund_id: number; approval_status: boolean; }) {
-  return await axios
-    .post(`${apiUrl}/approve-refund`, data, { headers: getAuthHeaders() })
-    .then((res) => res)
-    .catch((e) => e.response);
-}
-
-// ฟังก์ชันสำหรับดึงคำขออนุมัติทั้งหมด
-async function GetApprovalRequests() {
-  return await axios
-    .get(`${apiUrl}/approval-requests`, { headers: getAuthHeaders() })
-    .then((res) => res)
-    .catch((e) => e.response);
-}
-
-// ฟังก์ชันสำหรับดึงคำขออนุมัติเฉพาะตาม ID
-async function GetApprovalRequestById(id: string) {
-  return await axios
-    .get(`${apiUrl}/approval-request/${id}`, { headers: getAuthHeaders() })
-    .then((res) => res)
-    .catch((e) => e.response);
-}
-
-// ฟังก์ชันสำหรับอัปเดตคำขออนุมัติตาม ID
-async function UpdateApprovalRequestById(id: string, data: { approval_status?: boolean; }) {
-  return await axios
-    .put(`${apiUrl}/approval-request/${id}`, data, { headers: getAuthHeaders() })
-    .then((res) => res)
-    .catch((e) => e.response);
-}
-
-// ฟังก์ชันสำหรับลบคำขออนุมัติตาม ID
-async function DeleteApprovalRequestById(id: string) {
-  return await axios
-    .delete(`${apiUrl}/approval-request/${id}`, { headers: getAuthHeaders() })
-    .then((res) => res)
-    .catch((e) => e.response);
+  return res;
 }
 
 export {
@@ -320,15 +316,7 @@ export {
   GetSeatType,
   SignIn,
   GetConcert,
-  GetSeatsByConcertId,
-  CreateRefund,
-  GetRefundRequests,
-  GetRefundRequestById,
-  UpdateRefundRequestById,
-  DeleteRefundRequestById,
-  ApproveRefund,
-  GetApprovalRequests,
-  GetApprovalRequestById,
-  UpdateApprovalRequestById,
-  DeleteApprovalRequestById,
+  GetSeatsByConsertId,
+  GetPaymentByMemberId,
+  SendTicketEmail
 };

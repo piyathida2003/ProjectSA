@@ -2,19 +2,16 @@
 import React, { useState, useEffect } from 'react';  
 import { Button, Typography, Card, Spin, Alert } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { GetSeatsByConcertId, GetSeatType } from '../../services/https';
+import { GetSeatsByConsertId, GetSeatType } from '../../services/https';
 
 const { Title } = Typography;
 
 const SeatSelection: React.FC = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [seatsData, setSeatsData] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [groupedSeats, setGroupedSeats] = useState<any>({});
     const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
     const [selectedSeatType, setSelectedSeatType] = useState<number | null>(null);
     const [selectedZone, setSelectedZone] = useState<string | null>(null); // NEW: Track selected zone
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [selectedConcert, setSelectedConcert] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -31,14 +28,13 @@ const SeatSelection: React.FC = () => {
         const fetchSeatsAndTypes = async () => {
             if (selectedConcert && selectedConcert.ID) {
                 try {
-                    const seats = await GetSeatsByConcertId(selectedConcert.ID);
+                    const seats = await GetSeatsByConsertId(selectedConcert.ID);
                     const seatTypeResponse = await GetSeatType();
 
                     if (Array.isArray(seats) && seatTypeResponse?.data && Array.isArray(seatTypeResponse.data)) {
                         const seatTypes = seatTypeResponse.data;
 
                         const seatsWithDetails = seats.map(seat => {
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             const seatType = seatTypes.find((type: { ID: any; }) => type.ID === seat.SeatTypeID);
                             return {
                                 ...seat,
@@ -48,7 +44,6 @@ const SeatSelection: React.FC = () => {
                         });
                         
                         // จัดกลุ่มที่นั่งตามประเภทที่นั่ง (SeatTypeID) หรือโซน
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const grouped = seatsWithDetails.reduce((acc: any, seat: any) => {
                             const zone = seat.SeatTypeName || 'อื่นๆ'; // ใช้ชื่อโซนหรือตั้งชื่อเองตามต้องการ
                             if (!acc[zone]) {
@@ -114,21 +109,23 @@ const SeatSelection: React.FC = () => {
         }
     
         const ticketQuantity = selectedSeats.length;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const selectedSeatDetails: any = seatsData.find(seat => seat.SeatTypeID === selectedSeatType);
     
         const ticketPrice = selectedSeatDetails?.SeatTypePrice || 0;
         const selectedSeatTypeName = selectedSeatDetails?.SeatTypeName || 'ไม่ทราบ';
+
+        console.log('Selected Seat Type:', selectedSeatTypeName);
     
         navigate('/payment', {
             state: {
-                selectedSeats,
-                selectedConcert: selectedConcert?.name,
-                selectedSeatType: selectedSeatTypeName,
-                ticketQuantity,
-                ticketPrice,
+              selectedSeats,
+              selectedConcert: selectedConcert?.name,
+              selectedSeatType: selectedSeatTypeName,
+              ticketQuantity,
+              ticketPrice,
             },
-        });
+         });
+         
     };
 
     return (
@@ -164,7 +161,6 @@ const SeatSelection: React.FC = () => {
                         justifyItems: 'center',
                         marginTop: '20px'
                     }}>
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any
                         {groupedSeats[selectedZone].map((seat: any) => (
                             <Card
                                 key={seat.SeatNumber}

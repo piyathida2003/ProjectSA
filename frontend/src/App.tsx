@@ -1,13 +1,13 @@
-import React from 'react';
+import React from 'react'; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ConcertSelection from './pages/SelectConcertPage';
 import SeatSelection from './pages/SelectSeatPage';
 import Payment from './pages/Payment';
-import PaymentHistory from './pages/PaymentHistory';
 import Login from './pages/Member/Login';
 import Register from './pages/Member/Register';
-import RefundRequest from './pages/refund/RefundRequest';
-import { UserProvider } from './pages/component/UserContext'; // นำเข้า UserProvider
+import TicketInformation from './pages/TicketInformation';
+import { UserProvider } from '../src/pages/component/UserContext'; // นำเข้า UserProvider
+import RefundRequest from './pages/Refund/RefundRequest';
 
 const App: React.FC = () => {
   return (
@@ -25,8 +25,8 @@ const App: React.FC = () => {
             <Route path="/concerts" element={<ConcertSelection />} />
             <Route path="/select-seats" element={<SeatSelection />} />
             <Route path="/payment" element={<Payment />} />
-            <Route path="/payment-history" element={<PaymentHistory />} />
-            <Route path="/refund-request" element={<RefundRequest />} />
+            <Route path="/TicketInformation" element={<TicketInformation />} />
+            <Route path="/refund-request" element={<RefundRequest />} /> {/* เพิ่มเส้นทางนี้ */}
           </Route>
 
           {/* เปลี่ยนเส้นทางหน้าแรกไปที่ Login */}

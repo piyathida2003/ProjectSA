@@ -1,8 +1,9 @@
 import React from "react";
 import { Form, Input, Button, message, Modal } from "antd";
 import { useNavigate } from "react-router-dom";
-import Profile from '../component/profile/Profile';
+//import "./Profile";  // ตัวอย่างการใช้ case ที่ถูกต้อง // นำเข้าคอมโพเนนต์ Profile
 import "./RefundRequest.css";
+import Profile from "./Profile/Profile";
 
 const RefundRequest: React.FC = () => {
   const [form] = Form.useForm();

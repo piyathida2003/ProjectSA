@@ -41,12 +41,12 @@ func SetupDatabase() {
 	Member := &entity.Member{
 		Username:  "Sa1",
 		Password:  hashedPassword,
-		Email:     "sa@gmail.com",
+		Email:     "B6512194@g.sut.ac.th",
 		FirstName: "Sa",
 		LastName:  "67",
 		Birthday:  BirthDay,
 	}
-	db.FirstOrCreate(Member, &entity.Member{Email: "sa@gmail.com"})
+	db.FirstOrCreate(Member, &entity.Member{Email: "B6512194@g.sut.ac.th"})
 
 	// เพิ่มข้อมูลเริ่มต้นสำหรับ SeatType
 	seatTypes := []entity.SeatType{
@@ -81,12 +81,12 @@ func SetupDatabase() {
 			
 				seat := entity.Seat{
 					SeatNumber:  seatNumber,
-					ConcertID:   concert.ID,      // กำหนด ConcertID
+					ConcertID:   &concert.ID,      // กำหนด ConcertID
 					IsAvailable: true,
-					SeatTypeID:  seatType.ID,     // กำหนด SeatTypeID
+					SeatTypeID:  &seatType.ID,     // กำหนด SeatTypeID
 				}
 			
-				db.FirstOrCreate(&seat, &entity.Seat{SeatNumber: seatNumber, ConcertID: concert.ID})
+				db.FirstOrCreate(&seat, &entity.Seat{SeatNumber: seatNumber, ConcertID: &concert.ID})
 			}
 		}
 	}
