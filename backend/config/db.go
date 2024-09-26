@@ -33,6 +33,8 @@ func SetupDatabase() {
 		&entity.SeatType{},
 		&entity.Seat{},
 		&entity.Concert{},
+		&entity.Refundapproval{},
+		&entity.Refundrequest{},
 	)
 
 	hashedPassword, _ := HashPassword("wichitchaibas288")
