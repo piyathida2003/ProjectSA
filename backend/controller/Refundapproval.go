@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SnakeEyes-288/sa-67-example/config"
-	"github.com/SnakeEyes-288/sa-67-example/entity"
+	"example.com/sa-67-example/config"
+	"example.com/sa-67-example/entity"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,9 +24,9 @@ func RefundApproval(c *gin.Context) {
     }
 
     // อัปเดตสถานะบัตรคอนเสิร์ตให้เป็น "ยกเลิก" และบันทึกวันที่ทำรายการ
-    if err := config.DB().Model(&refundRequest).Updates(entity.RefundRequest{
-        Status: "Cancelled",
-        UpdatedAt: time.Now(),
+    if err := config.DB().Model(&refundRequest).Updates(entity.Refundapproval{
+        Approval_status: "Cancelled",
+        Approval_Date: time.Now(),
     }).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update refund status"})
         return

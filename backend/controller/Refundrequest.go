@@ -3,8 +3,8 @@ package controller
 import (
 	"net/http"
 
-	"github.com/SnakeEyes-288/sa-67-example/config"
-	"github.com/SnakeEyes-288/sa-67-example/entity"
+	"example.com/sa-67-example/config"
+	"example.com/sa-67-example/entity"
 	"github.com/gin-gonic/gin"
 )
 
