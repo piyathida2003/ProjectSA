@@ -1,8 +1,8 @@
 package entity
 
 import (
+   "gorm.io/gorm"
     "time"
-    "gorm.io/gorm"
 )
 type Concert struct {
     gorm.Model
