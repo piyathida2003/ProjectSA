@@ -9,5 +9,6 @@ type Refundrequest struct {
     Refund_amount    string
     Refund_Date      time.Time
     
-    Refundapproval     []Refundapproval
+    RefundapprovalID   uint
+    Refundapproval     Refundapproval `gorm:"foreignKey:RefundapprovalID"`
 }

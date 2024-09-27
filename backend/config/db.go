@@ -73,6 +73,31 @@ func SetupDatabase() {
 	for i, concert := range concerts {
 		db.FirstOrCreate(&concerts[i], &entity.Concert{Name: concert.Name})
 	}
+	// กำหนดสไลซ์ของคำขอคืนเงิน
+	refundRequests := []entity.Refundrequest{
+		{
+			Refund_amount: "500.00",
+			Refund_Date:   time.Now(), // วันที่คืนเงิน
+			
+			// Refundapproval: 1,
+		},
+	}
+	// วนลูปผ่านคำขอคืนเงิน
+	for _, refundRequest := range refundRequests {
+		db.Create(&refundRequest)
+	}
+
+	Refundapproval := []entity.Refundapproval{
+		{
+			Approval_status: "approve",
+			Approval_Date:   time.Now(), // วันที่คืนเงิน
+			
+		},
+	}
+	// วนลูปผ่านคำขอคืนเงิน
+	for _, Refundapproval := range Refundapproval {
+		db.Create(&Refundapproval)
+	}
 
 
 	for _, concert := range concerts {
@@ -80,18 +105,17 @@ func SetupDatabase() {
 			for i := 1; i <= 10; i++ { // สร้าง 10 ที่นั่งสำหรับแต่ละประเภทที่นั่ง
 				// seatNumber จะรวม ConcertID เพื่อให้มั่นใจว่า SeatNumber ไม่ซ้ำกันในแต่ละคอนเสิร์ต
 				seatNumber := fmt.Sprintf("%s%d-C%d", seatType.Name[0:1], i, concert.ID)
-			
+
 				seat := entity.Seat{
 					SeatNumber:  seatNumber,
-					ConcertID:   &concert.ID,      // กำหนด ConcertID
+					ConcertID:   &concert.ID, // กำหนด ConcertID
 					IsAvailable: true,
-					SeatTypeID:  &seatType.ID,     // กำหนด SeatTypeID
+					SeatTypeID:  &seatType.ID, // กำหนด SeatTypeID
 				}
-			
+
 				db.FirstOrCreate(&seat, &entity.Seat{SeatNumber: seatNumber, ConcertID: &concert.ID})
 			}
 		}
 	}
-	
 
 }
